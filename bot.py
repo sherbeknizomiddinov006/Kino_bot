@@ -28,17 +28,32 @@ class SearchState(StatesGroup):
 def get_main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🔍 Kino qidirish")],
-            [KeyboardButton(text="📞 Adminga Murojat Qilish")]
+            [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")],
+            [KeyboardButton(text="📢 Kanal Admini")],
+            [KeyboardButton(text="🔍 Kino qidirish")]
         ],
         resize_keyboard=True
     )
-@dp.message(F.text == "📞 Adminga Murojaat Qilish")
-async def contact_admin(message: types.Message):
+@dp.message(F.text == "🤖 Bot Yaratish bo'yicha Admin")
+async def bot_admin(message: types.Message):
     await message.answer(
-        "👨‍💻 Adminga savollar bo'lsa bemalol mana shu telegramga yozishingiz mumkin!\n\n"
-        "@nizomiddinov_0414"
+        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
+        "👨‍💻 @nizomiddinov_0414"
     )
+
+
+@dp.message(F.text == "📢 Kanal Admini")
+async def channel_admin(message: types.Message):
+    await message.answer(
+        "📢 <b>Kanal bo'yicha savollaringiz bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
+        "👤 @ogabek_temirov"
+    )
+
+
+@dp.message(F.text == "🔍 Kino qidirish")
+async def ask_code(message: types.Message, state: FSMContext):
+    await state.set_state(SearchState.waiting_for_code)
+    await message.answer("🔢 Kino kodini yuboring:")
 # ===================== DATABASE =====================
 async def get_db_pool():
     try:
