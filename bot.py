@@ -26,8 +26,19 @@ class SearchState(StatesGroup):
     waiting_for_code = State()
 
 def get_main_menu():
-    return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🔍 Kino qidirish")]], resize_keyboard=True)
-
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🔍 Kino qidirish")],
+            [KeyboardButton(text="📞 Adminga Murojaat Qilish")]
+        ],
+        resize_keyboard=True
+    )
+@dp.message(F.text == "📞 Adminga Murojaat Qilish")
+async def contact_admin(message: types.Message):
+    await message.answer(
+        "👨‍💻 Admin bilan bog'lanish uchun quyidagi username ustiga bosing:\n\n"
+        "@nizomiddinov_0414"
+    )
 # ===================== DATABASE =====================
 async def get_db_pool():
     try:
