@@ -34,13 +34,10 @@ def get_main_menu():
         ],
         resize_keyboard=True
     )
-@dp.message(F.text == "🤖 Bot Yaratish bo'yicha Admin")
-async def bot_admin(message: types.Message):
-    await message.answer(
-        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
-        "👨‍💻 @nizomiddinov_0414"
-    )
-
+@dp.message(F.text == "🔍 Kino qidirish")
+async def ask_code(message: types.Message, state: FSMContext):
+    await state.set_state(SearchState.waiting_for_code)
+    await message.answer("🔢 Kino kodini yuboring:")
 
 @dp.message(F.text == "📢 Kanal Admini")
 async def channel_admin(message: types.Message):
@@ -48,12 +45,12 @@ async def channel_admin(message: types.Message):
         "📢 <b>Kanal bo'yicha savollaringiz bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
         "👤 @ogabek_temirov"
     )
-
-
-@dp.message(F.text == "🔍 Kino qidirish")
-async def ask_code(message: types.Message, state: FSMContext):
-    await state.set_state(SearchState.waiting_for_code)
-    await message.answer("🔢 Kino kodini yuboring:")
+@dp.message(F.text == "🤖 Bot Yaratish bo'yicha Admin")
+async def bot_admin(message: types.Message):
+    await message.answer(
+        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
+        "👨‍💻 @nizomiddinov_0414"
+    )
 # ===================== DATABASE =====================
 async def get_db_pool():
     try:
