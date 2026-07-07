@@ -28,9 +28,9 @@ class SearchState(StatesGroup):
 def get_main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")],
-            [KeyboardButton(text="📢 Kanal Admini")],
             [KeyboardButton(text="🔍 Kino qidirish")]
+            [KeyboardButton(text="📢 Kanal Admini")],
+            [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")],
         ],
         resize_keyboard=True
     )
