@@ -25,30 +25,39 @@ dp = Dispatcher()
 class SearchState(StatesGroup):
     waiting_for_code = State()
 
+# ===================== MENYU =====================
+
 def get_main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🔍 Kino qidirish")]
+            [KeyboardButton(text="🔍 Kino qidirish")],
             [KeyboardButton(text="📢 Kanal Admini")],
-            [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")],
+            [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")]
         ],
         resize_keyboard=True
     )
+
+
+# ===================== MENYU HANDLERLARI =====================
+
 @dp.message(F.text == "🔍 Kino qidirish")
 async def ask_code(message: types.Message, state: FSMContext):
     await state.set_state(SearchState.waiting_for_code)
     await message.answer("🔢 Kino kodini yuboring:")
 
+
 @dp.message(F.text == "📢 Kanal Admini")
 async def channel_admin(message: types.Message):
     await message.answer(
-        "📢 <b>Kanal bo'yicha savollaringiz bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
+        "📢 <b>Kanal bo'yicha savollaringiz bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin.</b>\n\n"
         "👤 @ogabek_temirov"
     )
+
+
 @dp.message(F.text == "🤖 Bot Yaratish bo'yicha Admin")
 async def bot_admin(message: types.Message):
     await message.answer(
-        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin:</b>\n\n"
+        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin.</b>\n\n"
         "👨‍💻 @nizomiddinov_0414"
     )
 # ===================== DATABASE =====================
