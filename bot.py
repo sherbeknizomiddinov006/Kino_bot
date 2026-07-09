@@ -45,7 +45,7 @@ async def ask_code(message: types.Message, state: FSMContext):
 async def our_channel(message: types.Message):
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📺 Fantastik Kino Kanaliga O'tish", url="https://t.me/fantastikkinos")]
+            [InlineKeyboardButton(text="📺Kanalga O'tish", url="https://t.me/fantastikkinos")]
         ]
     )
     await message.answer(
