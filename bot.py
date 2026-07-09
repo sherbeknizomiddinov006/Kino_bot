@@ -7,18 +7,16 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 import asyncpg
-
 
 # ===================== SOZLAMALAR =====================
 TOKEN = "8352093089:AAFlkn4pcsuYvSAzXcrgpmCIQeUfxq54gE0"
 ADMIN_ID = 8320643359
-
 DATABASE_URL = "postgresql://postgres:TcFdaaGuouwLnwneUoemLtSnTaQWZvMa@reseau.proxy.rlwy.net:57864/railway"
 
 logging.basicConfig(level=logging.DEBUG)
+
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
@@ -26,40 +24,50 @@ class SearchState(StatesGroup):
     waiting_for_code = State()
 
 # ===================== MENYU =====================
-
 def get_main_menu():
     return ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="🔍 Kino qidirish")],
+            [KeyboardButton(text="📺 Bizning Kanal")],
             [KeyboardButton(text="📢 Kanal Admini")],
             [KeyboardButton(text="🤖 Bot Yaratish bo'yicha Admin")]
         ],
         resize_keyboard=True
     )
 
-
 # ===================== MENYU HANDLERLARI =====================
-
 @dp.message(F.text == "🔍 Kino qidirish")
 async def ask_code(message: types.Message, state: FSMContext):
     await state.set_state(SearchState.waiting_for_code)
     await message.answer("🔢 Kino kodini yuboring:")
 
+@dp.message(F.text == "📺 Bizning Kanal")
+async def our_channel(message: types.Message):
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📺 Fantastik Kino Kanaliga O'tish", url="https://t.me/fantastikkinos")]
+        ]
+    )
+    await message.answer(
+        "🎬 <b>Bizning Rasmiy Kanal</b>\n\n"
+        "Barcha yangi kinolar shu yerdan chiqadi 👇",
+        reply_markup=keyboard
+    )
 
 @dp.message(F.text == "📢 Kanal Admini")
 async def channel_admin(message: types.Message):
     await message.answer(
-        "📢 <b>Kanal bo'yicha savollaringiz bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin.</b>\n\n"
+        "📢 <b>Kanal bo'yicha savollaringiz bo'lsa:</b>\n\n"
         "👤 @ogabek_temirov"
     )
-
 
 @dp.message(F.text == "🤖 Bot Yaratish bo'yicha Admin")
 async def bot_admin(message: types.Message):
     await message.answer(
-        "🤖 <b>Bot yaratish bo'yicha zakazlar yoki ma'lumot kerak bo'ladigan bo'lsa, quyidagi Telegram orqali bog'lanishingiz mumkin.</b>\n\n"
+        "🤖 <b>Bot yaratish bo'yicha zakazlar uchun:</b>\n\n"
         "👨‍💻 @nizomiddinov_0414"
     )
+
 # ===================== DATABASE =====================
 async def get_db_pool():
     try:
@@ -72,7 +80,6 @@ async def get_db_pool():
 
 async def init_db(pool):
     async with pool.acquire() as conn:
-        # Eski jadvalni yangilash
         await conn.execute('''
             CREATE TABLE IF NOT EXISTS movies (
                 id SERIAL PRIMARY KEY,
@@ -85,13 +92,10 @@ async def init_db(pool):
                 UNIQUE(code, file_unique_id)
             )
         ''')
-        
-        # Agar eski jadvalda duration ustuni bo'lmasa - qo'shamiz
         await conn.execute('''
-            ALTER TABLE movies 
+            ALTER TABLE movies
             ADD COLUMN IF NOT EXISTS duration INTEGER DEFAULT 0;
         ''')
-        
         print("✅ Jadval muvaffaqiyatli yangilandi!")
 
 async def add_movie(pool, code, file_id, file_unique_id, caption, duration=0):
@@ -120,16 +124,10 @@ class DatabaseMiddleware:
         return await handler(event, data)
 
 # ===================== ASOSIY HANDLERLAR =====================
-
 @dp.message(Command("start"))
 async def start(message: types.Message, state: FSMContext, pool):
     await state.clear()
     await message.answer(f"Salom {message.from_user.full_name}!", reply_markup=get_main_menu())
-
-@dp.message(F.text == "🔍 Kino qidirish")
-async def ask_code(message: types.Message, state: FSMContext):
-    await state.set_state(SearchState.waiting_for_code)
-    await message.answer("🔢 Kino kodini yuboring:")
 
 @dp.message(SearchState.waiting_for_code, F.text)
 async def search(message: types.Message, state: FSMContext, pool):
@@ -151,62 +149,52 @@ async def search(message: types.Message, state: FSMContext, pool):
         await message.answer(f"😔 {code} topilmadi.")
 
 # ===================== KANAL VA FORWARD SAQLASH =====================
-# ===================== KANAL VA FORWARD SAQLASH (YANGILANGAN) =====================
-
-MIN_DURATION = 1500  # 30 minut (sekundlarda)
+MIN_DURATION = 1500
 
 @dp.channel_post(F.video | F.document)
 async def save_from_channel(message: types.Message, pool):
-    """Kanalga to'g'ridan-to'g'ri tashlangan videoni saqlash"""
     text = message.caption or ""
     match = re.search(r'(\d+)', text)
     if not match:
         return
-    
     code = match.group(1)
     media = message.video or message.document
     if not media:
         return
-    
     duration = getattr(media, 'duration', 0)
-    
+   
     if duration < MIN_DURATION:
         await message.reply(f"⚠️ #{code} — qisqa video ({duration//60} daqiqa). 30 daqiqadan uzunroq yuboring.")
         return
-    
+   
     success = await add_movie(pool, code, media.file_id, media.file_unique_id, text, duration)
     if success:
         await message.reply(f"✅ Kanaldan saqlandi: #{code} ({duration//60} daqiqa)")
     else:
         await message.reply(f"ℹ️ #{code} allaqachon bor.")
 
-
 @dp.message(F.forward_from_chat)
 async def save_forwarded_movie(message: types.Message, pool):
-    """Forward qilingan videoni saqlash"""
     if message.from_user.id != ADMIN_ID:
         return
-    
     text = message.caption or ""
     match = re.search(r'(\d+)', text)
     if not match:
         await message.answer("❌ Captionda kod topilmadi.")
         return
-    
     code = match.group(1)
     media = message.video or message.document
     if not media:
         await message.answer("❌ Video topilmadi.")
         return
-    
     duration = getattr(media, 'duration', 0)
-    
+   
     if duration < MIN_DURATION:
         await message.answer(f"⚠️ #{code} — qisqa video ({duration//60} daqiqa). Faqat 30+ daqiqalik to‘liq kinoni yuboring.")
         return
-    
+   
     success = await add_movie(pool, code, media.file_id, media.file_unique_id, text, duration)
-    
+   
     if success:
         await message.answer(f"✅ Forward saqlandi: #{code} ({duration//60} daqiqa)")
     else:
@@ -237,11 +225,9 @@ async def clear_all_movies(message: types.Message, pool):
     if message.from_user.id != ADMIN_ID:
         await message.answer("❌ Ruxsat yo‘q!")
         return
-    
     async with pool.acquire() as conn:
         await conn.execute("DELETE FROM movies")
-        await conn.execute("ALTER SEQUENCE movies_id_seq RESTART WITH 1")  # ID ni 1 dan boshlash
-    
+        await conn.execute("ALTER SEQUENCE movies_id_seq RESTART WITH 1")
     await message.answer("🗑️ **Barcha kinolar bazadan o‘chirildi!**")
     print("🗑️ Baza tozalandi!")
 
@@ -249,11 +235,11 @@ async def clear_all_movies(message: types.Message, pool):
 async def main():
     pool = await get_db_pool()
     await init_db(pool)
-    
+   
     dp.message.middleware(DatabaseMiddleware(pool))
     dp.channel_post.middleware(DatabaseMiddleware(pool))
-    
-    print("🚀 Bot va Database muvaffaqiyatli ishga tushdi!")
+   
+    print("🚀 Bot muvaffaqiyatli ishga tushdi!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
